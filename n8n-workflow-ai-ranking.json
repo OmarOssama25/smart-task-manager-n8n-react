@@ -1,0 +1,161 @@
+{
+  "name": "Smart Task Manager - AI Ranking & Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "smart-task-ai-analyze",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract task data from webhook\nconst tasks = $input.item.json.tasks || [];\nconst action = $input.item.json.action || 'ai_analyze';\n\n// Format tasks for AI analysis with ranking request\nconst taskList = tasks.map((task, index) => `\nTask ${index + 1}:\n- ID: ${task.id}\n- Title: ${task.title}\n- Description: ${task.description || 'None'}\n- Due Date: ${task.dueDate}\n- Current Priority: ${task.priority}\n- Status: ${task.status}\n`).join('\\n');\n\nconst prompt = `You are an intelligent task management AI. Analyze these tasks and:\n1. Suggest optimal priority (High/Medium/Low) based on urgency and importance\n2. Rank them in order of what should be done FIRST (1 = highest priority, most urgent)\n3. Calculate urgency score (0-100, where 100 = most urgent)\n4. Provide brief reasoning for each ranking\n\nConsider:\n- Due date proximity (closer = higher rank)\n- Keywords: urgent, critical, important, asap, deadline\n- Task complexity and dependencies\n- Current status\n\n${taskList}\n\nRespond ONLY with valid JSON in this EXACT format:\n{\n  \"analyzedTasks\": [\n    {\n      \"id\": \"task_id_here\",\n      \"title\": \"task_title_here\",\n      \"suggestedPriority\": \"High|Medium|Low\",\n      \"rank\": 1,\n      \"urgencyScore\": 95,\n      \"reason\": \"Brief explanation of why this ranking\"\n    }\n  ],\n  \"topTask\": {\n    \"title\": \"most_urgent_task_title\",\n    \"reason\": \"why it should be done first\"\n  }\n}`;\n\nreturn [{\n  json: {\n    prompt: prompt,\n    originalTasks: tasks,\n    totalTasks: tasks.length\n  }\n}];"
+      },
+      "id": "prepare-ai-prompt",
+      "name": "Prepare AI Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert task management AI that helps users prioritize and rank their tasks intelligently. Always respond with valid JSON only, no additional text."
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 1500
+        }
+      },
+      "id": "openai-analyze",
+      "name": "OpenAI Analyze & Rank",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "your-openai-credential-id",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const originalTasks = $input.first().json.originalTasks;\nconst aiResponseText = $input.last().json.message.content;\n\ntry {\n  // Parse AI response\n  const aiResponse = JSON.parse(aiResponseText);\n  \n  // Ensure analyzedTasks array exists\n  if (!aiResponse.analyzedTasks || !Array.isArray(aiResponse.analyzedTasks)) {\n    throw new Error('Invalid AI response format');\n  }\n  \n  // Sort analyzed tasks by rank (ascending)\n  const sortedTasks = aiResponse.analyzedTasks.sort((a, b) => a.rank - b.rank);\n  \n  // Calculate statistics\n  const highPriorityCount = sortedTasks.filter(t => t.suggestedPriority === 'High').length;\n  const avgUrgencyScore = sortedTasks.reduce((sum, t) => sum + (t.urgencyScore || 0), 0) / sortedTasks.length;\n  \n  return [{\n    json: {\n      message: `AI analysis complete! ${sortedTasks.length} tasks ranked and prioritized.`,\n      analyzedTasks: sortedTasks,\n      topTask: aiResponse.topTask || sortedTasks[0],\n      statistics: {\n        totalTasks: sortedTasks.length,\n        highPriorityCount: highPriorityCount,\n        averageUrgency: Math.round(avgUrgencyScore),\n        mostUrgentTask: sortedTasks[0]?.title\n      }\n    }\n  }];\n} catch (error) {\n  // Fallback: return tasks with default ranking\n  console.error('Error parsing AI response:', error);\n  \n  const fallbackTasks = originalTasks.map((task, index) => ({\n    id: task.id,\n    title: task.title,\n    suggestedPriority: task.priority,\n    rank: index + 1,\n    urgencyScore: 50,\n    reason: 'Default ranking (AI parse error)'\n  }));\n  \n  return [{\n    json: {\n      message: 'Tasks processed with default ranking',\n      analyzedTasks: fallbackTasks,\n      error: error.message\n    }\n  }];\n}"
+      },
+      "id": "process-ai-response",
+      "name": "Process AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare AI Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI Prompt": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Analyze & Rank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Analyze & Rank": {
+      "main": [
+        [
+          {
+            "node": "Process AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process AI Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "smart-task-manager"
+    },
+    {
+      "name": "ai-ranking"
+    }
+  ],
+  "meta": {
+    "instanceId": "example"
+  }
+}
+
