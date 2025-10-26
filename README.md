@@ -409,7 +409,7 @@ Created with ❤️ for LyRise AI Internship Assessment
 ---
 
 ### 📹 **Live Demo Video**
-[🎥 Watch the 5-minute demo](YOUR_VIDEO_LINK_HERE) - Shows the complete system in action with AI-powered task reordering and n8n workflow integration.
+[🎥 Watch the 5-minute demo]((https://drive.google.com/drive/u/0/folders/1mbXw4O-tnv2U1hH15xVFvDuhQlTCvSjt)) - Shows the complete system in action with AI-powered task reordering and n8n workflow integration.
 
 ### 🔗 **Live n8n Workflows**
 - **Main Sync**: `https://omarossama.app.n8n.cloud/webhook/sync` - AI task prioritization
