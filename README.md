@@ -408,23 +408,6 @@ Created with ❤️ for LyRise AI Internship Assessment
 
 ---
 
-## 📹 Demo Video Checklist
-
-When recording your demo video (≤5 minutes), include:
-
-- [ ] Opening the app in browser
-- [ ] Adding multiple tasks with different priorities
-- [ ] Showing task details (title, description, due date)
-- [ ] Marking tasks as complete
-- [ ] Clicking "Sync with n8n" button
-- [ ] Showing n8n dashboard/workflow execution
-- [ ] Returning to frontend to show updated task statuses
-- [ ] (Optional) Demonstrating AI analysis feature
-- [ ] Showing persistent storage (refresh page, tasks remain)
-- [ ] Briefly explaining the architecture
-
-## 🎬 **Demo & Submission**
-
 ### 📹 **Live Demo Video**
 [🎥 Watch the 5-minute demo](YOUR_VIDEO_LINK_HERE) - Shows the complete system in action with AI-powered task reordering and n8n workflow integration.
 
@@ -433,16 +416,4 @@ When recording your demo video (≤5 minutes), include:
 - **Get Tasks**: `https://omarossama.app.n8n.cloud/webhook/get-tasks` - Data retrieval  
 - **Delete Task**: `https://omarossama.app.n8n.cloud/webhook/delete-task` - Task removal
 - **Overdue Check**: `https://omarossama.app.n8n.cloud/webhook/check-overdue` - Automated monitoring
-
-## 🔗 Useful Links
-
-- [n8n Documentation](https://docs.n8n.io/)
-- [Vite Documentation](https://vite.dev/)
-- [React Documentation](https://react.dev/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/)
-- [Framer Motion Documentation](https://www.framer.com/motion/)
-
----
-
-**Happy Task Managing! 🚀**
 
