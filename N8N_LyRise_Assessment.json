@@ -1,0 +1,771 @@
+{
+  "name": "LyRise Assessment",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        32
+      ],
+      "id": "af0e7051-a60c-416e-879d-46f1e0755f2a",
+      "name": "Webhook",
+      "webhookId": "e20c92ab-a227-4cee-9558-e82ebcb3d7af"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.tasks",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        224,
+        32
+      ],
+      "id": "fea1de7c-29b9-42c5-ba54-b3785488f944",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        656,
+        176
+      ],
+      "id": "9fb0c95d-135c-4c06-849e-a1542de92146",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "1x1GPdObyrZHLwSk",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY",
+          "mode": "list",
+          "cachedResultName": "AI Task Manager",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $json.id }}",
+            "title ": "={{ $json.title }}",
+            "description": "={{ $json.description }}",
+            "DueDate": "={{ $json.dueDate }}",
+            "priority": "={{ $json.priority }}",
+            "status": "={{ $json.status }}",
+            "CreatedAt": "={{ $json.createdAt }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title ",
+              "displayName": "title ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "DueDate",
+              "displayName": "DueDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CreatedAt",
+              "displayName": "CreatedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1552,
+        32
+      ],
+      "id": "8dd3808f-5680-4a63-94b8-b0955b34fb18",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GoqHbGtENb9w51sS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.text || \"\"; // Get LLM text output\nlet cleaned = raw.trim();\n\n// 1️⃣ Remove markdown code fences (```json or ```)\ncleaned = cleaned\n  .replace(/^```json\\s*/i, \"\")\n  .replace(/^```\\s*/i, \"\")\n  .replace(/```$/i, \"\")\n  .trim();\n\n// 2️⃣ Try to parse JSON safely\nlet tasks;\ntry {\n  tasks = JSON.parse(cleaned);\n} catch (error) {\n  throw new Error(\"Failed to parse LLM output: \" + error.message + \"\\nRaw text:\\n\" + cleaned);\n}\n\n// 3️⃣ Return each task as an item\nreturn tasks.map(task => ({ json: task }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        32
+      ],
+      "id": "d0763ed8-8fa9-4d95-8f16-b92715ff17f3",
+      "name": "Restructure the LLM output into JSON"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        320
+      ],
+      "id": "1a47ee69-0f7d-4947-9854-eedffda27125",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY",
+          "mode": "list",
+          "cachedResultName": "AI Task Manager",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        320
+      ],
+      "id": "54a2b9e2-0738-4545-bfa1-0f226f7de5de",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GoqHbGtENb9w51sS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\nconst overdue = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n\n  // Normalize field names (handle extra spaces or inconsistent casing)\n  const title = (data.title || data[\"title \"] || \"\").trim();\n  const dueRaw = data.dueDate || data.DueDate;\n  const priority = data.priority || \"Unknown\";\n  const status = (data.status || \"\").trim().toLowerCase();\n\n  // Skip rows with invalid or missing dates\n  if (!dueRaw) continue;\n\n  const due = new Date(dueRaw);\n\n  // Only include if due date has passed AND status is pending (not completed)\n  if (due < today && status === \"pending\") {\n    overdue.push({\n      title,\n      dueDate: due.toISOString().split(\"T\")[0],\n      priority\n    });\n  }\n}\n\n// If no overdue pending tasks, return empty to stop the email node\nif (overdue.length === 0) {\n  return [];\n}\n\n// Build a nice message for the email\nconst message = overdue\n  .map(task => `• ${task.title} — Due: ${task.dueDate} — Priority: ${task.priority}`)\n  .join(\"\\n\");\n\nreturn [\n  {\n    json: {\n      subject: \"Overdue Tasks Reminder\",\n      body: `The following tasks are overdue:\\n\\n${message}`\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        320
+      ],
+      "id": "5a59628d-69be-43da-9608-8a5e6fae5e96",
+      "name": "Detect Overdue Tasks"
+    },
+    {
+      "parameters": {
+        "sendTo": "omarossama71@gmail.com",
+        "subject": "Overdue Tasks Reminder",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        320
+      ],
+      "id": "b247f121-6f8e-4333-9656-10a7534dbc8e",
+      "name": "Send a message",
+      "webhookId": "f4aa814e-b046-48f7-bba4-f8f6303a1e1a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "a5vECGfwwwfYa8t9",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Trigger Everyday to check overdue tasks\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -272,
+        304
+      ],
+      "typeVersion": 1,
+      "id": "93453224-a48a-435b-9ced-068af27266c6",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Main Workflow\nSyncing/Rerank/Update upon comletion or addition of tasks"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -272,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "1c56a3e9-097a-4854-8d28-602a4f12fb33",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gather and filter only pending tasks\nconst all = $input.all().map(i => i.json);\nconst pending = all.filter(t => t.status === \"Pending\");\nconst completed = all.filter(t => t.status === \"Completed\");\n\nreturn [{ json: { pending, completed } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        32
+      ],
+      "id": "d06a0da2-221c-498a-bcd6-a1992586d2ea",
+      "name": "Gather Tasks"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a task prioritization assistant.\n\nThe user will provide you with a list of tasks in JSON format.\n\nEach task has the following fields:\n- title\n- description\n- dueDate (YYYY-MM-DD)\n- priority (Low, Medium, High)\n- status (Pending or Completed)\n\nYour job:\n1. Ignore any tasks that are marked as Completed.\n2. Reorder the remaining Pending tasks from most urgent to least, based on:\n   - How soon the dueDate is (earlier = more urgent)\n   - The priority level (High > Medium > Low)\n3. If there are no Pending tasks, return an **empty JSON array** (`[]`).\n4. Respond ONLY with a **valid JSON array** — no markdown, no text, no commentary.\n\nHere are the tasks in JSON:\n{{ JSON.stringify($json.pending) }}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        656,
+        32
+      ],
+      "id": "500ead4e-715e-4546-8c0b-1663e5408282",
+      "name": "Reorder Tasks"
+    },
+    {
+      "parameters": {
+        "path": "/get-tasks",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        512
+      ],
+      "id": "8766cda4-3208-48b8-a5e0-1e4697c2917b",
+      "name": "Webhook1",
+      "webhookId": "a73ded69-36ab-4e2a-9253-43bd9df4ad04"
+    },
+    {
+      "parameters": {
+        "content": "## Get All Tasks"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -272,
+        496
+      ],
+      "typeVersion": 1,
+      "id": "23e5d505-43d6-46d9-8385-573e0fd46a57",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY",
+          "mode": "list",
+          "cachedResultName": "AI Task Manager",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        512
+      ],
+      "id": "55b4fc25-2946-408d-bdfb-f7e1a0d420f5",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GoqHbGtENb9w51sS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        432,
+        512
+      ],
+      "id": "0eff723c-f053-4ca8-8aed-9939ef80c499",
+      "name": "Send tasks to frontend"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1️⃣ Get sorted pending tasks from the LLM output\nconst sortedPending = $input.all().map(item => item.json);\n\n// 2️⃣ Get completed tasks from the Gather Tasks node\nconst gatherNode = $items(\"Gather Tasks\")[0].json;\nconst completed = gatherNode.completed || [];\n\n// 3️⃣ Merge: pending first (sorted), completed after\nconst merged = [...sortedPending, ...completed];\n\n// 4️⃣ Return one item per task\nreturn merged.map(task => ({ json: task }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        32
+      ],
+      "id": "a8ab0679-d361-4472-96ec-7920e890d6a2",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "content": "## Deletion\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -272,
+        688
+      ],
+      "typeVersion": 1,
+      "id": "52aee1ce-3f87-46ab-b351-6966bc0e34ae",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "delete-task",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        720
+      ],
+      "id": "dda67703-90d5-4f4e-8ba0-3408e33b3562",
+      "name": "Delete task webhook",
+      "webhookId": "4e99bfe0-45ce-41ba-b75e-05f43860ed7b"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY",
+          "mode": "list",
+          "cachedResultName": "AI Task Manager",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id",
+              "lookupValue": "={{ $json.body.task.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        720
+      ],
+      "id": "78cc8e30-4425-44ec-859e-3def87181077",
+      "name": "Read Rows",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GoqHbGtENb9w51sS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY",
+          "mode": "list",
+          "cachedResultName": "AI Task Manager",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit#gid=0"
+        },
+        "startIndex": "=\n{{ $json.row_number }}"
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        432,
+        720
+      ],
+      "id": "58c57880-bc17-49f5-8afe-9429d1b8ab8c",
+      "name": "Delete rows or columns from sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GoqHbGtENb9w51sS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        640,
+        720
+      ],
+      "id": "031156de-5917-4728-8e02-b2bc5a188359",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "value": "1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY",
+          "mode": "list",
+          "cachedResultName": "AI Task Manager",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pOoUje3zc8JcqNCDWuzR9255KKkrXnFRNEIC6ypqgKY/edit#gid=0"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1360,
+        32
+      ],
+      "id": "677b2bff-f6b6-4a05-8a83-b69b18cff7de",
+      "name": "Clear sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GoqHbGtENb9w51sS",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Gather Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reorder Tasks",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Restructure the LLM output into JSON": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Detect Overdue Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Overdue Tasks": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gather Tasks": {
+      "main": [
+        [
+          {
+            "node": "Reorder Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reorder Tasks": {
+      "main": [
+        [
+          {
+            "node": "Restructure the LLM output into JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Send tasks to frontend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Clear sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete task webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rows": {
+      "main": [
+        [
+          {
+            "node": "Delete rows or columns from sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete rows or columns from sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear sheet": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8f657fea-c52a-4845-a4b7-fd83d4b3779c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "388aa1ab6ee151fe67c2e62df7d4c90c483e40c12b7ae9b26a4e3e7ab7b5dce4"
+  },
+  "id": "joYjawXAcj3tyRxn",
+  "tags": []
+}
