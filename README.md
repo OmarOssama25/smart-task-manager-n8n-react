@@ -1,6 +1,5 @@
 # 🚀 Smart Task Manager with AI-Powered n8n Integration
 
-**LyRise AI Internship Assessment Project**
 
 An intelligent task management application that uses **AI-powered prioritization** through n8n automation workflows. Built with React, integrated with Google Sheets, and enhanced with LLM intelligence.
 
@@ -120,17 +119,7 @@ All workflows are **live and functional** for assessment:
 - ✅ **Automation Mastery** - Complex workflows simplified
 - ✅ **User-Centric Design** - Seamless experience with powerful backend
 
----
 
-## 🎯 **Built for LyRise**
-
-This project demonstrates the **exact skills** LyRise values:
-- **AI Integration Expertise** - Practical LLM implementation
-- **Full-Stack Mastery** - Modern frontend + automation backend  
-- **Problem-Solving Focus** - Real productivity enhancement
-- **Technical Excellence** - Clean, scalable, documented code
-
-**Ready to contribute to LyRise's AI-powered future!** 🚀
 
 ---
 
